@@ -42,7 +42,10 @@ class PanRep(torch.nn.Module):
 
     def reset_parameters(self):
         r"""Resets all learnable parameters of the module."""
-        self.embedding.reset_parameters()
+        self.node_embeddings.reset_parameters()
+        self.cr_matrix.reset_parameters()
+
+    def forward():
 
     def loss(self) -> Tensor{
 
