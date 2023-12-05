@@ -16,6 +16,30 @@ from sklearn.cluster import KMeans
 import tqdm
 
 class PanRep(torch.nn.Module):
+    r"""
+    Args:
+        edge_index_dict (Dict[Tuple[str, str, str], torch.Tensor]): Dictionary
+            holding edge indices for each `(src_node_type, rel_type, dst_node_type)` 
+            relational type present in the heterogeneous graph.
+        embedding_dim (int): The size of each embedding vector.
+        num_clusters (int): number of centroids in k-means clustering
+        node_features (Tensor): original node features used for k-means clustering
+        metapath (List[Tuple[str, str, str]]): The metapath described as a list
+            of :obj:`(src_node_type, rel_type, dst_node_type)` tuples.
+        walk_length (int): The walk length.
+        context_size (int): The actual context size which is considered for
+            positive samples. This parameter increases the effective sampling
+            rate by reusing samples across different source nodes.
+        walks_per_node (int, optional): The number of walks to sample for each
+            node. (default: :obj:`1`)
+        num_negative_samples (int, optional): The number of negative samples to
+            use for each positive sample. (default: :obj:`1`)
+        num_nodes_dict (Dict[str, int], optional): Dictionary holding the
+            number of nodes for each node type. (default: :obj:`None`)
+        M (int): the dimension of the frequency vector mu_n which shows 
+            how many times the node n participates in motifs of size up to 4 nodes
+
+"""
     def __init__(
         self,
         edge_index_dict: Dict[EdgeType, Tensor],
@@ -25,7 +49,7 @@ class PanRep(torch.nn.Module):
     ):
         super().__init__()
 
-        # TODO:: Have to count the number of nodes
+        # Have to count the number of nodes
         if num_nodes_dict is None:
             num_nodes_dict = {}
             for keys, edge_index in edge_index_dict.items():
@@ -43,7 +67,6 @@ class PanRep(torch.nn.Module):
         self.embedding_dim = embedding_dim
         self.node_embeddings = nn.Parameter(torch.randn(total_num_nodes, embedding_dim), requires_grad=True)
         self.num_clusters = num_clusters
-        #self.cr_matrix = torch.nn.Parameter(torch.randn(embedding_dim, num_clusters))
         self.cr_head = nn.Linear(embedding_dim, num_clusters)
         self.node_features = node_features
 
