@@ -4,13 +4,10 @@ This file contains the PanRep model.
 '''
 
 import torch.nn as nn
-import torch as th
-import dgl.function as fn
+import torch
 from panrep_encoder import EncoderHGT
 from panrep_decoders import NodeMotifDecoder,MultipleAttributeDecoder\
-    ,MutualInformationDiscriminator
-import dgl
-
+    ,MutualInformationDiscriminator,ClusterRecoverDecoderHomo
 
 
 class PanRepHetero(nn.Module):
@@ -21,7 +18,7 @@ class PanRepHetero(nn.Module):
         self.decoders=decoders
         self.encoder=encoder
         
-    def forward(self, g, masked_nodes):
+    def forward(self, g):
         positive = self.encoder(g,corrupt=False)
         loss=0
 
@@ -33,7 +30,8 @@ class PanRepHetero(nn.Module):
                 loss += infomax_loss
 
             if decoderName=='crd':
-                reconstruct_loss = decoderModel(g,positive,masked_nodes=masked_nodes)
+                # need to ensure g.node_features
+                reconstruct_loss = decoderModel(g,positive)
                 loss += reconstruct_loss
 
             if decoderName == 'nmd':
