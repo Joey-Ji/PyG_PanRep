@@ -31,6 +31,9 @@ class PanRepHetero(nn.Module):
 
             if decoderName=='crd':
                 # need to ensure g.node_features
+                # assume positive is not a dictionary but a tensor H
+                # TODO:: need to transform positive to H if positive is a dictionary
+                # and we are using panrep's data
                 reconstruct_loss = decoderModel(g,positive)
                 loss += reconstruct_loss
 
