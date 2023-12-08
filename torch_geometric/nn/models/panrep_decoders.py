@@ -1,6 +1,7 @@
 import torch.nn.functional as F
 import torch.nn as nn
 import torch
+import math
 from sklearn.cluster import KMeans
 
 
@@ -50,3 +51,38 @@ class ClusterRecoverDecoderHomo(nn.Module):
 
         loss = self.loss_function(reconstructed, true_clusters)
         return loss
+
+class InformationMaximizationDecoder(nn.Module):
+    def __init__(self, n_hidden):
+        super(InformationMaximizationDecoder, self).__init__()
+        self.w_him = nn.Parameter(torch.Tensor(n_hidden, n_hidden))
+        self.loss = nn.BCEWithLogitsLoss()
+    
+    def uniform(self, size, tensor):
+        bound = 1.0 / math.sqrt(size)
+        if tensor is not None:
+            tensor.data.uniform_(-bound, bound)
+
+    def reset_parameters(self):
+        size = self.w_him.size(0)
+        self.uniform(size, self.w_him)
+    
+    def forward(self, positives, negatives):
+        l1 = 0
+        l2 = 0
+        for node_type in positives.keys():
+            if positives[node_type].shape[0] > 0:
+                pos = positives[node_type]
+                neg = negatives[node_type]
+                glo = pos.mean(dim=0)
+
+                pos = torch.sigmoid(torch.matmul(pos, torch.matmul(self.w_him, glo)))
+                neg = torch.sigmoid(torch.matmul(neg, torch.matmul(self.w_him, glo)))
+
+                l1 += self.loss(pos, torch.ones_like(pos))
+                l2 += self.loss(neg, torch.zeros_like(neg))
+        return l1 + l2
+        
+
+
+
